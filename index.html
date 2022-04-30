@@ -1,0 +1,94 @@
+<html>
+    <head>
+        <title>Image Grid Maker</title>
+        <style>
+            *{
+                font-family: sans-serif;
+            }
+            .grid-image{
+                object-fit: cover;
+            }
+            .image-div{
+                background-size: cover;
+                background-position: center center;
+                display: inline-block;
+            }
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script>
+            let files = [];
+            function handleNewFiles(){
+                files = document.querySelector('#image-picker').files;
+            }
+            function generate(){
+                const rows = parseInt(document.querySelector('#rows').value);
+                const columns = parseInt(document.querySelector('#columns').value);
+                const cellWidth = parseInt(document.querySelector('#cellwidth').value);
+                const cellHeight = parseInt(document.querySelector('#cellheight').value);
+                const resultContainer = document.querySelector('#result-container');
+                resultContainer.innerHTML = '';
+                resultContainer.setAttribute('width', cellWidth * columns);
+                resultContainer.setAttribute('height', cellHeight * rows);
+                resultContainer.style = `width:${cellWidth * columns}px; height:${cellHeight * rows}px;`;
+                let prev = -1;
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < columns; j++) {
+                        const img = new Image(cellWidth, cellHeight);
+                        const div = document.createElement('div');
+                        div.classList.add('image-div');
+                        // img.classList.add('grid-image')
+                        let fileIndex = -1;
+                        do{
+                            fileIndex = Math.floor(Math.random() * files.length);
+                        }while(files.length > 1 && prev == fileIndex);
+                        prev = fileIndex;
+                        const fileReader = new FileReader();
+                        fileReader.onload = function (e) {
+                            div.style = `background-image:url('${e.target.result}'); width: ${cellWidth}px; height: ${cellHeight}px;`
+                        }
+                        fileReader.readAsDataURL(files[fileIndex]);
+                        resultContainer.appendChild(div);
+                    }
+                    resultContainer.appendChild(document.createElement('br'));
+                }
+               
+            }
+            function save(){
+                //TODO: it renders final image at @1x even though it displays fine at retina @2x
+                //workaround: force 2x size perhaps?d
+                html2canvas(document.querySelector("#result-container")).then(canvas => {
+                    const url = canvas.toDataURL();
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    anchor.download = 'imagegrid.png';
+                    anchor.click();
+
+                });
+            }
+            
+        </script>
+    </head>
+    <body>
+        <h3>Create random grid from images</h3>
+        <label>Total rows</label>
+        <input type="number" value="5" id="rows"/>
+        <br>
+        <label>Total columns</label>
+        <input type="number" value="5" id="columns"/>
+        <br>
+        <label>Cell width</label>
+        <input type="number" value="200" id="cellwidth"/>
+        <br>
+        <label>Cell height</label>
+        <input type="number" value="200" id="cellheight"/>
+        <br>
+        <input type="file" multiple id="image-picker" onchange="handleNewFiles()"/>
+        <br>
+        <button onclick="generate()">Generate</button>
+        <br>
+        <div id="result-container">
+
+        </div>
+        <button id="save" onclick="save()">Save Image</button>
+    </body>
+</html>
